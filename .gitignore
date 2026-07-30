@@ -1,0 +1,28 @@
+# Data & artifacts
+data/
+results/*.csv
+results/vectors_*/
+results/graph_emb_*/
+results/phase3_rows_*/
+results/_*
+mlruns/
+logs/
+*.zip
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+*.dat
+.env
+.claude/
+venv/
+*.pth
+*.pkl

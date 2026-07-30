@@ -1,0 +1,11 @@
+# Extra libraries the DAG tasks need on top of the Airflow base image.
+# torch is installed separately from its CPU wheel index (see Dockerfile).
+numpy==1.26.4
+pandas==2.2.2
+scipy==1.13.1
+pyyaml==6.0.2
+tqdm==4.66.5
+threadpoolctl==3.5.0
+faiss-cpu==1.14.3
+lightgbm==4.7.0
+scikit-learn==1.7.2

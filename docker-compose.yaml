@@ -1,0 +1,28 @@
+# Local Airflow (standalone: SQLite + SequentialExecutor) for running the recsys DAG.
+#
+#   docker compose build                     # build the image (torch + ML deps, ~few min)
+#   docker compose up                        # start Airflow UI at http://localhost:8080  (admin/admin)
+#   # headless full run (no UI needed):
+#   docker compose run --rm airflow bash -lc "airflow db migrate && airflow dags test recsys_two_stage_pipeline 2024-01-01"
+#
+# The whole project is mounted at /opt/airflow/project so tasks read code/config and write
+# artifacts (data/, results/) straight back to the host.
+services:
+  airflow:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: recsys-airflow:latest
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/dags
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__DATABASE__LOAD_DEFAULT_CONNECTIONS: "false"
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+      PYTHONPATH: /opt/airflow/project/src
+    volumes:
+      - ./:/opt/airflow/project
+    ports:
+      - "8080:8080"
+    command: standalone

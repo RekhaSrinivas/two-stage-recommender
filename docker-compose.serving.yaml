@@ -1,0 +1,31 @@
+# Serving stack: FastAPI recommender + Streamlit demo UI.
+#
+#   docker compose -f docker-compose.serving.yaml up --build
+#   API   -> http://localhost:8000/docs
+#   UI    -> http://localhost:8501
+#
+# data/ and results/ are mounted (not baked): the API loads the two-tower vectors and graph
+# embeddings produced by the training pipeline. Run the pipeline (or the Airflow DAG) first.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: serving/Dockerfile
+    image: recsys-serving:latest
+    environment:
+      RECSYS_DATASET: ml-100k
+    volumes:
+      - ./results:/app/results:ro
+      - ./data:/app/data:ro
+    ports:
+      - "8000:8000"
+
+  ui:
+    image: recsys-serving:latest
+    depends_on:
+      - api
+    environment:
+      API_URL: http://api:8000
+    command: streamlit run serving/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"

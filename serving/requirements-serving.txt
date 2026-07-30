@@ -1,0 +1,14 @@
+# Serving deps. Deliberately NO torch/faiss: at serve time the retriever is precomputed
+# vectors (NumPy) and the ranker is LightGBM, so the image stays small.
+numpy==1.26.4
+pandas==2.2.2
+scipy==1.13.1
+pyyaml==6.0.2
+tqdm==4.66.5
+threadpoolctl==3.5.0
+lightgbm==4.7.0
+scikit-learn==1.7.2
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+streamlit==1.41.1
+requests==2.32.3

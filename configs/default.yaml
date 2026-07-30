@@ -1,0 +1,74 @@
+# Central config. Every run reads from here so results are reproducible and
+# nothing is hard-coded in the scripts.
+
+data:
+  dataset: ml-1m          # ml-100k (tiny, for smoke tests) | ml-1m (dev) | ml-25m (full)
+  data_dir: data
+  min_rating_positive: 4  # ratings >= this become positive implicit feedback
+  min_user_interactions: 5  # drop users with fewer positives than this
+  test_holdout: 1         # per-user, hold out this many most-recent interactions for TEST
+  val_holdout: 1          # ...and this many just before that for VALIDATION
+  seed: 42
+
+eval:
+  ks: [5, 10, 20]         # report ranking metrics @ each K
+
+# Baseline hyperparameters (Phase 1).
+baselines:
+  itemcf:
+    topn_neighbors: 200   # keep only the strongest N neighbours per item (0 = keep all)
+  als:
+    factors: 64
+    regularization: 0.01
+    alpha: 40.0           # confidence scaling for implicit feedback (Hu-Koren-Volinsky)
+    iterations: 15
+    seed: 42
+
+# Two-tower retrieval model (Phase 2). Scientific notation avoided on purpose:
+# PyYAML parses `1e-6` as a string, not a float.
+two_tower:
+  embedding_dim: 64
+  hidden: [128]           # tower MLP hidden layers
+  out_dim: 64             # user & item vectors must share this dim (dot product)
+  dropout: 0.1
+  temperature: 1.0        # softmax temperature (lower = sharper)
+  use_item_genres: true   # feed genres into the item tower (helps generalization)
+  logq_correction: true   # popularity-debias the in-batch negatives
+  batch_size: 2048        # bigger batch = more in-batch negatives
+  epochs: 120             # a high cap; early-stopping decides the real stopping point
+  lr: 0.003               # higher LR fixes the slow small-init warmup
+  weight_decay: 0.000001
+  patience: 8             # early-stop after this many epochs without val NDCG gain
+  seed: 42
+
+# LightGCN graph embeddings (Phase 3). Trained with pairwise BPR loss.
+lightgcn:
+  dim: 64
+  n_layers: 3             # graph propagation depth (K)
+  batch_size: 8192        # CSR adjacency makes propagation cheap; this batch trains well & fast
+  epochs: 30              # ml-1m converges by ~here; also keeps each job well under the ~7min cap
+  lr: 0.01
+  reg: 0.0001             # L2 on layer-0 embeddings
+  patience: 8
+  seed: 42
+
+# LambdaMART ranking stage (Phase 4). Re-ranks the two-tower's top-N candidates.
+ranker:
+  n_candidates: 200       # retriever shortlist size handed to the ranker
+  n_estimators: 600
+  learning_rate: 0.05
+  num_leaves: 15          # shallow + regularized: don't overfit val signal that won't transfer
+  min_child_samples: 200
+  reg_lambda: 5.0
+  subsample: 0.8
+  colsample_bytree: 0.8
+  valid_frac: 0.15        # fraction of ranker-training users held out for early stopping
+  early_stopping_rounds: 40
+  seed: 42
+
+# Simulated A/B test (Phase 5).
+experiment:
+  seed: 123
+  n_bootstrap: 5000
+  alpha: 0.05             # significance level
+  examine_model: log      # position bias: 'log' = 1/log2(rank+2)
